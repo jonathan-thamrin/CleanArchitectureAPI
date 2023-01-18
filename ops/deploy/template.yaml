@@ -1,0 +1,151 @@
+kind: "Template"
+apiVersion: "v1"
+metadata:
+  name: "jonathan-shoppinglistapi"
+  annotations:
+    description: "jonathan-shoppinglistapi release template"
+objects:
+
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: $(app)-deployment
+    namespace: $(namespace)
+    labels:
+      app: $(app)
+  spec:
+    replicas: 3
+    selector:
+      matchLabels:
+        app: $(app)
+    template:
+      metadata:
+        labels:
+          app: $(app)
+      spec:
+        containers:
+          - image: $(image):$(imageTag)
+            name: $(app)
+            ports:
+              - containerPort: $((containerPort))
+            env:
+              - name: SECRET_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: $(db_name)-admin
+                    key:  DB_USER
+              - name: SECRET_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: $(db_name)-admin
+                    key: DB_PASSWORD
+              - name: SECRET_HOST
+                valueFrom:
+                  secretKeyRef:
+                    name: $(db_name)-admin
+                    key: DB_HOST
+              - name: SECRET_PORT
+                valueFrom:
+                  secretKeyRef:
+                    name: $(db_name)-admin
+                    key: DB_PORT
+              - name: SECRET_DB_NAME
+                valueFrom:
+                  secretKeyRef:
+                    name: $(db_name)-admin
+                    key: DB_NAME
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: $((containerPort))
+              initialDelaySeconds: 10
+              periodSeconds: 15
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+    name: $(app)-service
+    namespace: $(namespace)
+    labels:
+      app: $(app)
+  spec:
+    ports:
+      - port: 80
+        targetPort: $((containerPort))
+    selector:
+      app: $(app)
+
+- kind: Ingress
+  apiVersion: networking.k8s.io/v1
+  metadata:
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    name: $(app)-ingress
+    namespace: $(namespace)
+    labels:
+      app: $(app)
+  spec:
+    rules:
+      - host: $(host)
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: $(app)-service
+                  port:
+                    number: 80
+    tls:
+      - hosts:
+          - $(host)
+        secretName: $(app)-tls
+        
+- kind: Database
+  apiVersion: postgres.myob.com/v1
+  metadata:
+    name: $(db_name)
+    namespace: $(namespace)
+  spec:
+    instanceClass: $(db_instance)
+    storage: $((db_storage))
+
+parameters:
+  - name: "app"
+    description: "application name"
+    required: true
+    parameterType: string
+  - name: "namespace"
+    description: "kubernetes namespace"
+    required: true
+    parameterType: string
+  - name: "host"
+    description: "host url"
+    required: true
+    parameterType: string
+  - name: "image"
+    description: "docker image to use"
+    required: true
+    parameterType: string
+  - name: "imageTag"
+    description: "tag/version of docker image to use"
+    required: true
+    parameterType: string
+  - name: "containerPort"
+    description: "docker container port"
+    required: true
+    parameterType: int
+  - name: "db_name"
+    description: "name of postgresql database"
+    required: true
+    parameterType: string
+  - name: "db_instance"
+    description: "type of database instance"
+    required: true
+    parameterType: string
+  - name: "db_storage"
+    description: "size of database in (GB)"
+    required: true
+    parameterType: int

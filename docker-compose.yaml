@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  
+    db:
+      image: postgres:14.5-alpine
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+      ports:
+        - "5433:5432"
+      volumes:
+        - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+          
+    api:
+      build: .
+      ports:
+        - "8080:80"
+      depends_on:
+        - db
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - SECRET_HOST=db
+        - SECRET_PORT=5432
+        - SECRET_USERNAME=postgres
+        - SECRET_PASSWORD=postgres
+        - SECRET_DB_NAME=postgres

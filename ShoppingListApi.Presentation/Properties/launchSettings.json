@@ -1,0 +1,38 @@
+﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:30697",
+      "sslPort": 44353
+    }
+  },
+  "profiles": {
+    "ShoppingListApi": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "api/shoppinglist",
+      "applicationUrl": "https://localhost:7148;http://localhost:5140",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SECRET_HOST": "localhost",
+        "SECRET_PORT": "5433",
+        "SECRET_USERNAME": "postgres",
+        "SECRET_PASSWORD": "postgres",
+        "SECRET_DB_NAME": "postgres"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "api/shoppinglist",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+
+

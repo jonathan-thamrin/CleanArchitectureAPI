@@ -1,0 +1,30 @@
+env:
+  ECR_REPO: "274387265859.dkr.ecr.ap-southeast-2.amazonaws.com/jonathan-shoppinglistapi"
+
+steps:
+  - label: '🧪 Running Unit Tests'
+    command: 'docker build --target=test .'
+    agents:
+      queue: fma-dev
+
+  - label: ":sonarqube: SonarQube Scan"
+    command: 'ops/scripts/scan.sh'
+    agents:
+      queue: fma-dev
+
+  - wait
+
+  - label: '🐳 Building and Publishing Image AWS'
+    command: 'ops/scripts/build-and-push.sh'
+    plugins:
+      - ecr#v2.5.0:
+          login: true
+    agents:
+      queue: fma-dev
+
+  - wait
+
+  - label: ':kubernetes: Deploying to Europa Pre-Prod (Jupiter)'
+    command: 'ops/scripts/deploy.sh'
+    agents:
+      queue: europa-preprod-fma
